@@ -12,7 +12,8 @@ import { mergeIntervals, type Interval } from '../src/intervals';
 
 // A first attempt at a generator. It has a problem: run the tests and read
 // the counterexample.
-const interval: fc.Arbitrary<Interval> = fc.tuple(fc.integer(), fc.integer());
+const interval: fc.Arbitrary<Interval> = 
+    fc.tuple(fc.integer(), fc.integer()).map(([a, b]) => (a <= b ? [a, b] : [b, a]));
 const intervalList = fc.array(interval);
 
 describe('mergeIntervals', () => {
@@ -29,4 +30,15 @@ describe('mergeIntervals', () => {
 
   // Add your properties here. Aim for at least one of each pattern:
   // invariant, algebraic, metamorphic, differential, conditional.
+  it('touching intervals are merged', () => {
+      fc.assert(
+          fc.property(intervalList, xs => {
+              const out = mergeIntervals(xs);
+              const endpoints = out.flatten();
+              const unique = [... Set(endpoints)];
+              expect(unique.length).toEqual(endpoints.length);
+          });
+      );
+  });
 });
+
